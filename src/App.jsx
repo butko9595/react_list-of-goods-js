@@ -1,7 +1,7 @@
 import 'bulma/css/bulma.css';
 import './App.scss';
-import cn from 'classnames';
 import { useState } from 'react';
+import cn from 'classnames';
 
 export const goodsFromServer = [
   'Dumplings',
@@ -16,67 +16,39 @@ export const goodsFromServer = [
   'Garlic',
 ];
 
+const SORT_FIELD_ABC = 'alphabet';
+const SORT_FIELD_LENGTH = 'length';
+
+function getPreparedGoods(goods, sortField, getReverse) {
+  const preparedGoods = [...goods];
+
+  if (sortField === SORT_FIELD_ABC) {
+    preparedGoods.sort((good1, good2) => good1.localeCompare(good2));
+  } else if (sortField === SORT_FIELD_LENGTH) {
+    preparedGoods.sort((good1, good2) => good1.length - good2.length);
+  }
+
+  if (getReverse) {
+    preparedGoods.reverse();
+  }
+
+  return preparedGoods;
+}
+
 export const App = () => {
-  const ABC = 'abc';
-  const LENGTH = 'length';
-
-  const [sortedGoods, setSortedGoods] = useState([...goodsFromServer]);
-  const [wayOfSorting, setWayOfSorting] = useState('');
-  const [reversed, setReversed] = useState(false);
-
-  const getPreparedGoods = (goods, { sort, reversing }) => {
-    const preparedGoods = [...goods];
-
-    if (sort) {
-      preparedGoods.sort((good1, good2) => {
-        switch (sort) {
-          case ABC:
-            return good1.localeCompare(good2);
-          case LENGTH:
-            return good1.length - good2.length;
-          default:
-            return 0;
-        }
-      });
-    }
-
-    if (reversing) {
-      return preparedGoods.reverse();
-    }
-
-    return preparedGoods;
-  };
-
-  function sortABC() {
-    setWayOfSorting(ABC);
-  }
-
-  function sortLength() {
-    setWayOfSorting(LENGTH);
-  }
-
-  function reverse() {
-    setReversed(!reversed);
-  }
-
-  function reset() {
-    setWayOfSorting('');
-    setReversed(false);
-    setSortedGoods([...goodsFromServer]);
-  }
-
-  const currentGoods = getPreparedGoods(sortedGoods, {
-    sort: wayOfSorting,
-    reversing: reversed,
-  });
+  const [getReverse, setGetReverse] = useState(false);
+  const [sortField, setSortField] = useState('');
+  const visibleGoods = getPreparedGoods(goodsFromServer, sortField, getReverse);
 
   return (
     <div className="section content">
       <div className="buttons">
         <button
           type="button"
-          className={cn('button is-info', { 'is-light': wayOfSorting !== ABC })}
-          onClick={sortABC}
+          className={cn('button is-info', {
+            'is-light': sortField !== SORT_FIELD_ABC,
+          })}
+          onClick={() => setSortField(SORT_FIELD_ABC)}
         >
           Sort alphabetically
         </button>
@@ -84,37 +56,40 @@ export const App = () => {
         <button
           type="button"
           className={cn('button is-success', {
-            'is-light': wayOfSorting !== LENGTH,
+            'is-light': sortField !== SORT_FIELD_LENGTH,
           })}
-          onClick={sortLength}
+          onClick={() => setSortField(SORT_FIELD_LENGTH)}
         >
           Sort by length
         </button>
 
         <button
           type="button"
-          className={cn('button is-warning', {
-            'is-light': !reversed,
-          })}
-          onClick={reverse}
+          className={cn('button is-warning', { 'is-light': !getReverse })}
+          onClick={() =>
+            getReverse ? setGetReverse(false) : setGetReverse(true)
+          }
         >
           Reverse
         </button>
 
-        {wayOfSorting || reversed ? (
+        {(sortField || getReverse) && (
           <button
             type="button"
             className="button is-danger is-light"
-            onClick={reset}
+            onClick={() => {
+              setSortField('');
+              setGetReverse(false);
+            }}
           >
             Reset
           </button>
-        ) : null}
+        )}
       </div>
 
       <ul>
-        {currentGoods.map(good => (
-          <li data-cy="Good" key={good}>
+        {visibleGoods.map(good => (
+          <li key={good} data-cy="Good">
             {good}
           </li>
         ))}
